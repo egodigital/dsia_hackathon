@@ -1,0 +1,119 @@
+<head>
+	<script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function () {
+			$("#send-all").click(function (e) {
+				$.post("/enter_new_journey", {
+					journey: $("input[name='journey']").val(),
+					timestemp: new Date($("input[name='EnddatumDa']").val() + "T" + $("input[name='EnddatumUh']").val() + "Z").getTime(),
+					distance: $("input[name='distance']").val(),
+					duration: $("input[name='duration']").val()
+				})
+					.done(function (string) {
+						alert(string)
+					});
+				e.preventDefault();
+			});
+		});
+
+		$.post("/list_journeys", {}).done(string => JSON.parse(string).map(insert_table_row))
+
+		function delete_table() 
+		{
+			$(table).find("tbody").remove(0)
+		}
+
+		function insert_table_row(list) {
+			// list = from_string.split(", ")
+			// list[0] : name
+			// list[1] : distance
+			// list[2] : start
+			// list[3] : end
+			// list[4] : dauer
+			// list[5] : akkustand
+			var options = {day: 'numeric', month: 'long', year:"numeric", hour: "numeric", minute: "numeric"};
+			var start_time = new Date(list[2])
+			var end_time   = new Date(list[2])
+
+			start_time.setMinutes(start_time.getMinutes() + start_time.getTimezoneOffset())
+			end_time.setMinutes(end_time.getMinutes() + end_time.getTimezoneOffset())
+
+			list[1] = list[1] + " km"
+			list[2] = start_time.setMinutes(end_time.getMinutes() - list[3]);
+			list[2] = start_time.toLocaleString("de-De", options);
+			list[4] = list[3] + " min"
+			list[3] = end_time.toLocaleString("de-De", options);
+			$(table).find("tbody").append(tag_wrap("<tr><td>", list.join("</td><td>"),"</td></tr>"))
+		}
+
+		function tag_wrap(a,b,c) {
+			return a + b + c;
+		}
+
+	</script>
+</head>
+<body>
+<title>Dein eGo</title>
+<style>html{margin-left:50px; margin-top: 20px; margin-right: 50px} 
+#zeile {background-color: #e7c157;}
+div.body2 {background-image: url(Hintergrund1.png);
+background-size: cover;}
+</style>
+<div class="body2"> 
+<div class="row">
+<div class="five columns">
+<h1>Eingabe der Fahrten</h1>
+<form action="/test" method="post" autocomplete="off">
+	<p><h4>Name der Fahrt</h4></p>
+	<p><input type="text" name="journey"></p>
+	
+	<p><h4>Distanz</h4></p>
+	<p><input type="number" name="distance"></p>
+	
+	<p><h4>Anfang des Termins</h4></p>
+	<p><input type="date" name="EnddatumDa">
+	<input type="time" name="EnddatumUh"></p>
+	
+	<p><h4>Dauer der Fahrzeit</h4></p>
+	<p><input type="number" name="duration"></p>
+	
+	<button type="submit" id="send-all" name="Fahrt" value="Fahrt">Daten absenden</button>
+	<button type="reset">Zurücksetzen</button>
+</form>
+</div>
+
+
+<div class="seven columns">
+<h1>Geplante Fahrten</h1>	
+<link rel="stylesheet" href="css/normalize.css">
+<link rel="stylesheet" href="css/skeleton.css">
+
+
+<table id="table"> 
+<thead>
+	<tr>
+		<th>Fahrt</th>
+		<th>Distanz</th>
+		<th>Startzeit</th>
+		<th>Endzeit</th>
+		<th>Dauer</th>
+		<th>Akkuladestand</th>
+		<th>löschen</th>
+	</tr>
+</thead>
+	<tbody>
+		<!-- <tr id="zeile">
+			<td>Einkaufen</td>
+			<td>50km</td>
+			<td>01.01.2012 12:44:00</td>
+			<td>01.01.2012 12:44:00</td>
+			<td>45 Min</td>
+			<td></td>
+			<td></td>
+		</tr> -->
+	</tbody>
+</table>
+</div>
+</div>
+</div>
+</body>

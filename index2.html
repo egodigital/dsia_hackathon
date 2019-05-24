@@ -1,0 +1,38 @@
+<head>
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#send-all").click(function (e) {
+                $.post("/enter_new_journey", {journey : $("input[name='journey']").val(),
+                                              timestemp: new Date ($("input[name='EnddatumDa']").val() +"T"+ $("input[name='EnddatumUh']").val()+"Z").getTime(), 
+                                              distance: $("input[name='distance']").val(),
+                                              duration: $("input[name='duration']").val() })
+                    .done(function (string) {
+                        alert(string)
+                    });
+                e.preventDefault();
+            });
+        });
+    </script>
+</head>
+<body>
+<title>Dein eGo</title>
+<h1>Eingabe der Fahrten</h1>
+<form action="/test" method="post" autocomplete="off">
+	<p><label for="Fahrten">Fahrt</label></p>
+	<p><input type="text" name="journey"></p>
+	
+	<p><label for="Distanz">Distanz</label></p>
+	<p><input type="number" name="distance"></p>
+	
+	<p><label for="Enddatum">Enddatum</label></p>
+    <p><input type="date" name="EnddatumDa">
+       <input type="time" name="EnddatumUh"></p>
+	
+	<p><label for="Dauer">Dauer</label></p>
+	<p><input type="number" name="duration"></p>
+	
+	<button type="submit" name="Fahrt" value="Fahrt" id="send-all">Daten absenden</button>
+	<button type="reset">Zurücksetzen</button>
+</form>	
+</body>
