@@ -11,7 +11,13 @@ headers = {'Content-Type': 'application/json',
            'x-api-key': '{0}'.format(api_token)}    
 
 class Dsia(object):
-    
+
+    @cherrypy.expose
+    def delete_journey(self, **data):
+        with sqlite3.connect("database.sql") as database:
+                database.execute("delete from journey where id={}".format(data["journey_id"]))
+                database.execute("delete from timeframe where id={}".format(data["timefra_id"]))
+
     @cherrypy.expose
     def index(self):
         database = sqlite3.connect("database.sql")
@@ -21,9 +27,11 @@ class Dsia(object):
     def list_journeys(self):
         database = sqlite3.connect("database.sql")
         buffer = []
-        for t in database.execute("select name, distance, t.start, t.end from journey as j join timeframe as t on j.timeframe=t.id order by t.start asc;").fetchall():
+        for t in database.execute("select name, distance, t.start, t.end, j.id, t.id from journey as j join timeframe as t on j.timeframe=t.id order by t.start asc;").fetchall():
             buffer.append(list(t))
-        return json.dumps(buffer)
+        distance = requests.get("https://ego-vehicle-api.azurewebsites.net/api/v1/vehicle/signals/",
+                                                     headers=headers).json()["calculated_remaining_distance"]
+        return json.dumps({'dist': distance, 'list': buffer})
 
     @cherrypy.expose
     def enter_new_journey(self,**data):
