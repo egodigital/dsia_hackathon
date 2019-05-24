@@ -1,0 +1,193 @@
+<head>
+	<script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function () {
+			$("#send-all").click(function (e) {
+				$.post("/enter_new_journey", {
+					journey: $("input[name='journey']").val(),
+					timestemp: new Date($("input[name='EnddatumDa']").val() + "T" + $("input[name='EnddatumUh']").val() + "Z").getTime(),
+					distance: $("input[name='distance']").val(),
+					duration: $("input[name='duration']").val()
+				})
+					.done(function (string) {
+						update_table()
+					});
+				e.preventDefault();
+			});
+		});
+
+		$.post("/list_journeys", {}).done(string => {
+			var obj = JSON.parse(string)
+			console.log(obj.dist)
+			var sum = 0
+			for (var index in obj.list) {
+				sum += obj.list[index][1]
+				obj.list[index][5] = obj.dist-sum
+				insert_table_row(obj.list[index])
+			}
+		})
+
+		function delete_table() 
+		{
+			$(table).find("tbody").remove(0)
+		}
+
+		function update_table() {
+			location.reload()
+			// console.log("gonna delete table")
+			// delete_table();
+			// console.log("deleted table")
+			// console.log("attempt post")
+			// setTimeout(function ()  {$.post("/list_journeys", {}).done(
+				// string => {
+					// console.log("got word from the server...")
+					// var list = JSON.parse(string).map(insert_table_row)
+				// })}, 2000)
+		}
+
+		function insert_table_row(list) {
+			// list = from_string.split(", ")
+			// list[0] : name
+			// list[1] : distance
+			// list[2] : start
+			// list[3] : dauer
+			// list[4] : journey_id
+			// list[5] : timefra_id
+			
+			var options = {day: 'numeric', month: 'numeric', year:"numeric", hour: "numeric", minute: "numeric"};
+			var format_data = []
+			var start_time = new Date(list[2])
+			var end_time   = new Date(list[2])
+
+			start_time.setMinutes(start_time.getMinutes() + start_time.getTimezoneOffset())
+			end_time.setMinutes(end_time.getMinutes() + end_time.getTimezoneOffset())
+
+			format_data[0] = list[0]
+			
+			format_data[1] = list[1] + " km"
+
+			format_data[2] = start_time.setMinutes(end_time.getMinutes() - list[3]);
+			format_data[2] = start_time.toLocaleString("de-De", options);
+			
+			format_data[3] = end_time.toLocaleString("de-De", options);
+
+			format_data[4] = list[3] + " min"
+
+			class_str = ""
+			if (list[5] > 1)
+			{
+				format_data[5] = (list[5]/150*100.0).toFixed(2) + " %"
+			}
+			else
+			{
+				format_data[5] = "0 %"
+				class_str = "class='zeile'"
+			}
+
+
+			format_data[6] = "<img class='del_btn' onclick='delete_row(" + list[4] + ", " + list[5] +")' src='css/delete.png'/>"
+
+			$(table).find("tbody").append(tag_wrap("<tr " + class_str+ "><td style='padding:10px'>", format_data.join("</td><td>"),"</td></tr>"))
+
+			// list[0] : name
+			// list[1] : distance
+			// list[2] : start
+			// list[3] : ende
+			// list[4] : dauer
+			// list[5] : akkuladestand
+			// list[6] : loeschen_button
+
+		}
+
+		function delete_row(journey_id, timefra_id) {
+			$.post("/delete_journey", {journey_id: journey_id, timefra_id: timefra_id}).done(update_table)
+		}
+
+		function tag_wrap(a,b,c) {
+			return a + b + c;
+		}
+
+	</script>
+</head>
+<body class="body2">
+<title>Dein eGo</title>
+<style>
+html{margin-left:50px; margin-top: 20px; margin-right: 50px} 
+#zeile {background-color: #e7c157;}
+.del_btn {
+	width: 30px;
+}
+.body2 {background-image: url(css/Hintergrund5.png);
+background-size: cover;
+background-repeat: no-repeat;
+background-attachment: fixed;}
+j {font-size: 25px;}
+.zeile {
+	background-color: #c63b3b;
+	background-color: hsla(0,100%,50%,0.5);
+}
+</style>
+<div class="row">
+<div class="five columns">
+<h1>Eingabe der Fahrten</h1>
+<form>
+	<p>
+		<j>Name der Fahrt: &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</j>
+		<input type="text" name="journey">
+	</p>
+
+	<p>
+		<j>Distanz:
+			&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+		</j>
+		<input type="number" name="distance">
+	</p>
+
+	<p>
+		<j>Anfang des Termins: &nbsp&nbsp</j>
+		<tab id=t1>
+			<input type="date" name="EnddatumDa"><input type="time" name="EnddatumUh">
+	</p>
+
+	<p>
+		<j>Dauer der Fahrzeit: &nbsp&nbsp&nbsp&nbsp</j>
+		<input type="number" name="duration">
+	</p>
+
+	<button type="reset" id="send-all" name="Fahrt" value="Fahrt">Daten absenden</button>
+	<button type="reset">Zurücksetzen</button>
+</form>
+</div>
+
+<div class="seven columns">
+<h1>Geplante Fahrten</h1>	
+<link rel="stylesheet" href="css/normalize.css">
+<link rel="stylesheet" href="css/skeleton.css">
+
+<table id="table"> 
+<thead>
+	<tr>
+		<th>Fahrt</th>
+		<th>Distanz</th>
+		<th>Startzeit</th>
+		<th>Endzeit</th>
+		<th>Dauer</th>
+		<th>Akkuladestand</th>
+		<th>löschen</th>
+	</tr>
+</thead>
+	<tbody>
+		<!-- <tr id="zeile">
+			<td>Einkaufen</td>
+			<td>50km</td>
+			<td>01.01.2012 12:44:00</td>
+			<td>01.01.2012 12:44:00</td>
+			<td>45 Min</td>
+			<td></td>
+			<td></td>
+		</tr> -->
+	</tbody>
+</table>
+</div>
+</div>
+</body>
